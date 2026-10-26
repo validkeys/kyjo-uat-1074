@@ -1,0 +1,20 @@
+name: project-constraints
+description: >-
+  Purpose: carries this project's binding constraints (stack, conventions,
+  commands) into composed workflows.
+
+  Use-when: any composed build or task workflow for THIS project — embed the
+  constraint text into ai steps.
+
+  Not-for: other projects' workflows, or conversational turns that build
+  nothing.
+slots: {}
+body: |-
+  This project's binding constraints — respect them in every step:
+  - Language: TypeScript
+  - Runtime: node
+  - Package manager: pnpm
+  - Commit convention: conventional
+  - Test command: pnpm test
+  - Lint command: pnpm lint
+  - Notes: UAT project for issue 1074 verify organ verification.

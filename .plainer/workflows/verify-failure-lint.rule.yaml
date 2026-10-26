@@ -1,0 +1,7 @@
+name: "verify-failure-lint"
+applies: ["project"]
+directive: "In this project, lint has failed a composed verify before: lint exited 87 (command 344 chars; stdout 119 chars, stderr 0 chars). Compose steps that avoid this class."
+enforcement: "preamble"
+scope: "project"
+provenance:
+  origin: "mined"

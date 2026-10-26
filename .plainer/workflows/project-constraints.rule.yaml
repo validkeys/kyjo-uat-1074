@@ -1,0 +1,7 @@
+name: "project-constraints"
+applies: ["project"]
+directive: "This project builds with TypeScript; on node; packages via pnpm; commits follow conventional; tests pnpm test; lint pnpm lint."
+enforcement: "preamble"
+scope: "project"
+provenance:
+  origin: "elicited"

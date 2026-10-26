@@ -1,0 +1,4 @@
+testCommand: pnpm test
+lintCommand: pnpm lint
+testCommandPin: ae7aca4de98e885127fe392c0b60056f3472ed0f0be972870a06df422b3f140a
+lintCommandPin: ede823a2d5f2814db6ddd8a2969504d513bf5a4428b806aa4d1a0499fb38462f
