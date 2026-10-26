@@ -1,0 +1,297 @@
+name: uat-s3
+title: "UAT S3: red checks + escalation"
+tags:
+  - project
+  - authoring
+initial: implement_1
+strictEvents: true
+states:
+  implement_2:
+    displayName: Run Lint Command
+    action:
+      type: shell
+      command: npm run lint
+    transitions:
+      - on: complete
+        goto: implement_3
+  implement_3:
+    displayName: Run Test Command
+    action:
+      type: shell
+      command: npm run test
+    transitions:
+      - on: complete
+        goto: verify_lint
+  verify_lint:
+    displayName: "Verify Done Criteria: lint"
+    action:
+      type: shell
+      command: >-
+        command -v pnpm >/dev/null 2>&1 || exit 86
+
+        /opt/plainer/bin/pnpm install --offline --frozen-lockfile --ignore-scripts --trust-lockfile --store-dir /opt/plainer/pnpm-store >/tmp/plainer-verify-install.log 2>&1 || { echo "verify-env
+        install failed (exiting 87); install log tail:"; tail -n 40 /tmp/plainer-verify-install.log; exit 87; }
+
+        pnpm lint
+      captureOutput: true
+    on:
+      complete: verify_test
+      error:
+        - target: checks_unrunnable
+          guard: $ctx.exitCode == 86 || $ctx.exitCode == 87
+        - target: repair
+      timeout: gate
+    timeoutMs: 110000
+  verify_recheck_lint:
+    displayName: "Recheck Done Criteria: lint"
+    action:
+      type: shell
+      command: >-
+        command -v pnpm >/dev/null 2>&1 || exit 86
+
+        /opt/plainer/bin/pnpm install --offline --frozen-lockfile --ignore-scripts --trust-lockfile --store-dir /opt/plainer/pnpm-store >/tmp/plainer-verify-install.log 2>&1 || { echo "verify-env
+        install failed (exiting 87); install log tail:"; tail -n 40 /tmp/plainer-verify-install.log; exit 87; }
+
+        pnpm lint
+      captureOutput: true
+    on:
+      complete: verify_recheck_test
+      error:
+        - target: checks_unrunnable
+          guard: $ctx.exitCode == 86 || $ctx.exitCode == 87
+        - target: escalation
+      timeout: escalation
+    timeoutMs: 110000
+  verify_test:
+    displayName: "Verify Done Criteria: test"
+    action:
+      type: shell
+      command: >-
+        command -v pnpm >/dev/null 2>&1 || exit 86
+
+        /opt/plainer/bin/pnpm install --offline --frozen-lockfile --ignore-scripts --trust-lockfile --store-dir /opt/plainer/pnpm-store >/tmp/plainer-verify-install.log 2>&1 || { echo "verify-env
+        install failed (exiting 87); install log tail:"; tail -n 40 /tmp/plainer-verify-install.log; exit 87; }
+
+        pnpm test
+      captureOutput: true
+    on:
+      complete: done
+      error:
+        - target: checks_unrunnable
+          guard: $ctx.exitCode == 86 || $ctx.exitCode == 87
+        - target: repair
+      timeout: gate
+    timeoutMs: 110000
+  verify_recheck_test:
+    displayName: "Recheck Done Criteria: test"
+    action:
+      type: shell
+      command: >-
+        command -v pnpm >/dev/null 2>&1 || exit 86
+
+        /opt/plainer/bin/pnpm install --offline --frozen-lockfile --ignore-scripts --trust-lockfile --store-dir /opt/plainer/pnpm-store >/tmp/plainer-verify-install.log 2>&1 || { echo "verify-env
+        install failed (exiting 87); install log tail:"; tail -n 40 /tmp/plainer-verify-install.log; exit 87; }
+
+        pnpm test
+      captureOutput: true
+    on:
+      complete: done
+      error:
+        - target: checks_unrunnable
+          guard: $ctx.exitCode == 86 || $ctx.exitCode == 87
+        - target: escalation
+      timeout: escalation
+    timeoutMs: 110000
+  checks_unrunnable:
+    displayName: Checks Could Not Run
+    action:
+      type: fail
+      message: "checks could not run: the verify environment preflight or offline install failed — see the run's errorMessage context for the phase and log tail. If the install refused for lockfile drift
+        (the manifests changed after the store was primed), reprime required: reprime the sandbox before any retry can install"
+  escalation:
+    displayName: Escalate The Red Checks
+    action:
+      type: approval
+      prompt: The done-criteria checks failed again after the bounded repair. Retry the checks once more, or abort the run?
+      options:
+        - retry
+        - abort
+    on:
+      retry: verify2_lint
+      abort: checks_aborted
+  verify2_lint:
+    displayName: "Verify Done Criteria (Retry): lint"
+    action:
+      type: shell
+      command: >-
+        command -v pnpm >/dev/null 2>&1 || exit 86
+
+        /opt/plainer/bin/pnpm install --offline --frozen-lockfile --ignore-scripts --trust-lockfile --store-dir /opt/plainer/pnpm-store >/tmp/plainer-verify-install.log 2>&1 || { echo "verify-env
+        install failed (exiting 87); install log tail:"; tail -n 40 /tmp/plainer-verify-install.log; exit 87; }
+
+        pnpm lint
+      captureOutput: true
+    on:
+      complete: verify2_test
+      error:
+        - target: checks_unrunnable
+          guard: $ctx.exitCode == 86 || $ctx.exitCode == 87
+        - target: checks_failed_final
+      timeout: checks_failed_final
+    timeoutMs: 110000
+  verify2_recheck_lint:
+    displayName: "Recheck Done Criteria (Retry): lint"
+    action:
+      type: shell
+      command: >-
+        command -v pnpm >/dev/null 2>&1 || exit 86
+
+        /opt/plainer/bin/pnpm install --offline --frozen-lockfile --ignore-scripts --trust-lockfile --store-dir /opt/plainer/pnpm-store >/tmp/plainer-verify-install.log 2>&1 || { echo "verify-env
+        install failed (exiting 87); install log tail:"; tail -n 40 /tmp/plainer-verify-install.log; exit 87; }
+
+        pnpm lint
+      captureOutput: true
+    on:
+      complete: verify2_recheck_test
+      error:
+        - target: checks_unrunnable
+          guard: $ctx.exitCode == 86 || $ctx.exitCode == 87
+        - target: checks_failed_final
+      timeout: checks_failed_final
+    timeoutMs: 110000
+  verify2_test:
+    displayName: "Verify Done Criteria (Retry): test"
+    action:
+      type: shell
+      command: >-
+        command -v pnpm >/dev/null 2>&1 || exit 86
+
+        /opt/plainer/bin/pnpm install --offline --frozen-lockfile --ignore-scripts --trust-lockfile --store-dir /opt/plainer/pnpm-store >/tmp/plainer-verify-install.log 2>&1 || { echo "verify-env
+        install failed (exiting 87); install log tail:"; tail -n 40 /tmp/plainer-verify-install.log; exit 87; }
+
+        pnpm test
+      captureOutput: true
+    on:
+      complete: verify2_recheck_lint
+      error:
+        - target: checks_unrunnable
+          guard: $ctx.exitCode == 86 || $ctx.exitCode == 87
+        - target: checks_failed_final
+      timeout: checks_failed_final
+    timeoutMs: 110000
+  verify2_recheck_test:
+    displayName: "Recheck Done Criteria (Retry): test"
+    action:
+      type: shell
+      command: >-
+        command -v pnpm >/dev/null 2>&1 || exit 86
+
+        /opt/plainer/bin/pnpm install --offline --frozen-lockfile --ignore-scripts --trust-lockfile --store-dir /opt/plainer/pnpm-store >/tmp/plainer-verify-install.log 2>&1 || { echo "verify-env
+        install failed (exiting 87); install log tail:"; tail -n 40 /tmp/plainer-verify-install.log; exit 87; }
+
+        pnpm test
+      captureOutput: true
+    on:
+      complete: done
+      error:
+        - target: checks_unrunnable
+          guard: $ctx.exitCode == 86 || $ctx.exitCode == 87
+        - target: checks_failed_final
+      timeout: checks_failed_final
+    timeoutMs: 110000
+  checks_failed_final:
+    displayName: Checks Failed After Retry
+    action:
+      type: fail
+      message: checks failed after the retry generation — the red packet is in the run's errorMessage context; no further repair or gate follows
+  checks_aborted:
+    displayName: Checks Aborted
+    action:
+      type: fail
+      message: the owner aborted the run at the escalation gate
+  repair:
+    displayName: Repair The Red Checks
+    action:
+      type: ai
+      prompt: >-
+        The done-criteria checks failed — the worktree is not in a passing state. Fix what this run wrote, nothing else.
+
+
+        The failing diagnostics (the verify command's output):
+
+        $ctx.errorMessage
+
+
+        Answer with the full corrected contents of exactly these files, at exactly these paths (relative to the worktree root), and no others — the workflow saves them and the checks re-run:
+
+        - report.txt
+
+
+        Change nothing beyond these files: no new files, no edits outside this list, and no dependency or config changes unless the failing diagnostics require one in these files.
+
+
+        Never write or change the dependency manifests: package.json and pnpm-lock.yaml are off-limits in this run — the checks install with --frozen-lockfile against the store primed before the run
+        started, so a dependency change here would make every retry fail its install (reprime required). Fix within the listed files only; if the diagnostics truly require a dependency change, answer
+        with the files unchanged and say so.
+
+
+        ## Project constraints
+
+        - project-constraints: This project builds with TypeScript; on node; packages via pnpm; commits follow conventional; tests pnpm test; lint pnpm lint.
+
+        - charter-preservation: When a step touches a contract document (a charter, constitution, policy, or any document another party authored), EXTEND it in place — append, amend a section, add a
+        superseding entry — never replace the document wholesale. Every supersession MUST be recorded inside the document itself: a dated note naming what superseded what. Observable posture for
+        verification: a lint check can compare a run's document mutations against the recorded supersessions — an unrecorded replacement is a violation. This is mitigation, not prevention: advisory
+        prompt text cannot stop a determined rewrite; the supersession record is what makes the violation detectable after the fact.
+      outputKey: repair_files
+      outputFormat: filepath
+    transitions:
+      - on: complete
+        goto: repair_wrote
+      - on: error
+        goto: gate
+  repair_wrote:
+    displayName: "Repair: Save Files"
+    action:
+      type: write-files
+      input: repair_files
+      workspace: worktree
+      outputKey: repair_wrote
+    transitions:
+      - on: complete
+        goto: verify_recheck_lint
+  gate:
+    displayName: Review the Plan
+    action:
+      type: approval
+      prompt: The plan is ready. Start now, or defer?
+      options:
+        - start
+        - defer
+    transitions:
+      - on: start
+        goto: implement_1
+      - on: defer
+        goto: done
+  done:
+    displayName: Done
+    action:
+      type: final
+      description: |-
+        Created report.txt and confirmed that lint and test commands both pass.
+
+        ## Acceptance checklist
+        - [ ] A file named report.txt exists in the project root containing the single line: scenario one ran. — observe via "pnpm lint" (provenance: intake; never auto-executed from this checklist)
+        - [ ] The lint command passes. — observe via "pnpm lint" (provenance: intake; never auto-executed from this checklist)
+        - [ ] The test command passes. — observe via "pnpm test" (provenance: intake; never auto-executed from this checklist)
+
+        Note: This workflow creates new files only. File editing will be available when repo-aware composition lands.
+    type: final
+  implement_1:
+    displayName: Write the report file
+    action:
+      type: shell
+      command: echo "scenario three ran" > report.txt && rm -f notes.txt
+    transitions:
+      - on: complete
+        goto: verify_lint
