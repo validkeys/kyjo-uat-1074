@@ -295,3 +295,5 @@ states:
     transitions:
       - on: complete
         goto: verify_lint
+context:
+  worktree: .
