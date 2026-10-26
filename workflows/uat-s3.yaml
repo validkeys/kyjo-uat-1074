@@ -1,33 +1,6 @@
 name: uat-s3
 initial: implement_1
 states:
-  plan:
-    displayName: Draft the Plan
-    action:
-      type: ai
-      prompt: >-
-        The user wants a file 'report.txt' created with specific content. Then, lint and test commands need to be executed, and their successful completion confirmed. I will generate a plan to perform
-        these actions.
-
-
-        The owner's request:
-
-        Write a file named report.txt in the project root containing the single line: scenario one ran. Then run the lint and test commands and confirm both pass.
-
-
-        ## Project constraints
-
-        - project-constraints: This project builds with TypeScript; on node; packages via pnpm; commits follow conventional; tests pnpm test; lint pnpm lint.
-
-        - charter-preservation: When a step touches a contract document (a charter, constitution, policy, or any document another party authored), EXTEND it in place — append, amend a section, add a
-        superseding entry — never replace the document wholesale. Every supersession MUST be recorded inside the document itself: a dated note naming what superseded what. Observable posture for
-        verification: a lint check can compare a run's document mutations against the recorded supersessions — an unrecorded replacement is a violation. This is mitigation, not prevention: advisory
-        prompt text cannot stop a determined rewrite; the supersession record is what makes the violation detectable after the fact.
-      systemPrompt: You draft plans for a facilitated space-workflow run.
-      outputKey: plan
-    transitions:
-      - on: complete
-        goto: gate
   gate:
     displayName: Review the Plan
     action:
@@ -64,16 +37,6 @@ states:
         rm -f notes.txt
     on:
       complete: verify_lint
-  wrote_1:
-    displayName: "Write Report File: Save Files"
-    action:
-      type: write-files
-      input: files_1
-      workspace: worktree
-      outputKey: wrote_1
-    transitions:
-      - on: complete
-        goto: implement_2
   verify_lint:
     displayName: "Verify Done Criteria: lint"
     action:
@@ -312,3 +275,5 @@ states:
     transitions:
       - on: complete
         goto: verify_recheck_lint
+context:
+  worktree: .
