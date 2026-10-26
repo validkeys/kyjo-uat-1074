@@ -1,0 +1,10 @@
+{
+  "name": "uat-1074-proj",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.24.0",
+  "scripts": {
+    "lint": "node scripts/lint.js",
+    "test": "node scripts/test.js"
+  }
+}

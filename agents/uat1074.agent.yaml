@@ -1,0 +1,11 @@
+name: uat1074
+charter: >-
+  You execute small verification tasks in this project exactly as asked.
+tools:
+  - file_read
+  - file_write
+  - shell
+bounds:
+  maxTurns: 10
+  deadlineMs: 120000
+  maxTotalTokens: 60000
